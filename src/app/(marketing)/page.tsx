@@ -289,13 +289,11 @@ export default async function HomePage() {
           {investments.length === 0 ? (
             <>
               <SetupNotice what="investment strategies" />
-              {investments.length === 0 && (
-                <EmptyState
-                  className="mt-4"
-                  title="No open strategies"
-                  description="Investment products appear here once they are published."
-                />
-              )}
+              <EmptyState
+                className="mt-4"
+                title="No open strategies"
+                description="Strategies appear here once they are published."
+              />
             </>
           ) : (
             <div className="grid gap-4 md:grid-cols-3">

@@ -19,7 +19,6 @@ const PROTECTED_PREFIXES = [
   "/security",
   "/support",
   "/car-orders",
-  "/cars/checkout",
   "/admin",
 ];
 

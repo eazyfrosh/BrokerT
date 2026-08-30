@@ -59,7 +59,7 @@ the platform itself:
 | --- | --- |
 | Quotes and price history | `SimulatedMarketDataProvider` — a mean-reverting geometric random walk over a stored quote, plus five years of seeded daily candles |
 | Cash balances | `demo_cash_movement()`, which refuses to run when demo mode is off |
-| Order execution | The demo venue inside `place_order()`; no order is routed anywhere |
+| Order execution | The demo venue inside `place_order()` and `process_resting_orders()`; no order is routed anywhere |
 | Strategy track records | A seeded, deterministic simulator (`src/lib/simulation.ts`) |
 | Vehicle order requests | Records against the account; nothing reaches a manufacturer or dealer |
 
@@ -178,6 +178,7 @@ supabase db push
 | `0002_functions.sql` | New-user provisioning and every transactional business function |
 | `0003_rls.sql` | Row Level Security policies, guard triggers, realtime publication |
 | `0004_seed_reference_data.sql` | Instrument, five years of simulated candles, six strategies, vehicle catalogue, platform settings |
+| `0005_resting_orders.sql` | Settles resting limit and stop orders once the market reaches their price |
 
 They are written to be safely re-runnable: enum creation is guarded, tables use
 `create table if not exists`, policies are dropped before being recreated, and the candle generator

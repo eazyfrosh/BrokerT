@@ -142,7 +142,7 @@ export class SimulatedMarketDataProvider implements MarketDataProvider {
       quoted_at: new Date(now).toISOString(),
     };
 
-    const { error } = await this.writeClient
+    const { error: writeError } = await this.writeClient
       .from("market_quotes")
       .update({
         price: next.price,
@@ -157,7 +157,19 @@ export class SimulatedMarketDataProvider implements MarketDataProvider {
       .eq("asset_id", row.asset_id);
 
     // A failed write is not fatal — serve the freshly computed tick anyway.
-    if (error) return { ...row, price: next.price };
+    if (writeError) return { ...row, price: next.price };
+
+    // The price has moved, so resting limit and stop orders may now be
+    // marketable. Settling them here is what makes the demo venue behave like
+    // a venue rather than a queue that never clears. A failure must not break
+    // the quote read, so it is logged and swallowed.
+    const { error: fillError } = await this.writeClient.rpc("process_resting_orders", {
+      p_asset_id: row.asset_id,
+    });
+    if (fillError) {
+      console.error("[market] could not settle resting orders:", fillError.message);
+    }
+
     return next;
   }
 

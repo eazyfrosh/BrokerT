@@ -11,6 +11,7 @@ import { isAdminRole, isSuperAdminRole } from "@/lib/roles";
 const RLS_SQL = readFileSync("supabase/migrations/0003_rls.sql", "utf8");
 const FUNCTIONS_SQL = readFileSync("supabase/migrations/0002_functions.sql", "utf8");
 const SCHEMA_SQL = readFileSync("supabase/migrations/0001_schema.sql", "utf8");
+const RESTING_SQL = readFileSync("supabase/migrations/0005_resting_orders.sql", "utf8");
 
 const USER_SCOPED_TABLES = [
   "profiles",
@@ -209,6 +210,40 @@ describe("admin functions", () => {
     ]) {
       expect(FUNCTIONS_SQL).toContain(action);
     }
+  });
+});
+
+describe("resting order settlement", () => {
+  it("only considers orders that are still working", () => {
+    expect(RESTING_SQL).toContain("where status in ('submitted', 'partially_filled')");
+  });
+
+  it("takes a row lock and skips rows another worker holds", () => {
+    expect(RESTING_SQL).toContain("for update skip locked");
+  });
+
+  it("caps the fill at the customer's limit so they never do worse", () => {
+    expect(RESTING_SQL).toContain("v_price := least(v_quote.price, v_order.limit_price)");
+    expect(RESTING_SQL).toContain("v_price := greatest(v_quote.price, v_order.limit_price)");
+  });
+
+  it("releases the reservation rather than double-spending the balance", () => {
+    expect(RESTING_SQL).toContain("reserved_balance = reserved_balance - v_reserved");
+    expect(RESTING_SQL).toContain("least(v_reserved, v_wallet.reserved_balance)");
+  });
+
+  it("rejects a sell whose position has since gone, instead of going negative", () => {
+    expect(RESTING_SQL).toContain("Position no longer sufficient to fill this order");
+  });
+
+  it("is not callable by a browser session", () => {
+    expect(RESTING_SQL).toContain("revoke all on function public.process_resting_orders(uuid) from public");
+    expect(RESTING_SQL).not.toMatch(/grant execute on function public\.process_resting_orders[\s\S]*?to authenticated/);
+  });
+
+  it("writes a ledger entry and a notification for every fill", () => {
+    expect(RESTING_SQL).toContain("insert into public.transactions");
+    expect(RESTING_SQL).toContain("'order_filled'");
   });
 });
 
