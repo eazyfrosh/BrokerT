@@ -69,6 +69,120 @@ const EMPTY_DELIVERY: DeliveryForm = {
   country: "",
 };
 
+/**
+ * Both helpers live at module scope. A component declared inside the
+ * configurator body would be a new type on every render, remounting each input
+ * and dropping focus while the customer is still typing.
+ */
+function OptionGrid({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: VehicleOption[];
+  value: string;
+  onChange: (code: string) => void;
+  label: string;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="grid gap-2 sm:grid-cols-2">
+      {options.map((option) => {
+        const active = option.code === value;
+        return (
+          <button
+            key={option.id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(option.code)}
+            className={cn(
+              "flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              active ? "border-primary bg-primary/6" : "border-border hover:border-primary/40",
+            )}
+          >
+            {option.swatch ? (
+              <span
+                className="mt-0.5 size-6 shrink-0 rounded-full border border-border"
+                style={{ backgroundColor: option.swatch }}
+                aria-hidden
+              />
+            ) : (
+              <span
+                className={cn(
+                  "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border",
+                  active ? "border-primary bg-primary text-primary-foreground" : "border-input",
+                )}
+                aria-hidden
+              >
+                {active && <Check className="size-3" strokeWidth={3} />}
+              </span>
+            )}
+
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium">{option.name}</span>
+                <span className="shrink-0 text-sm tabular text-muted-foreground">
+                  {Number(option.price_delta) === 0
+                    ? "Included"
+                    : `+${formatCurrency(Number(option.price_delta), { decimals: 0 })}`}
+                </span>
+              </span>
+              {option.description && (
+                <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
+                  {option.description}
+                </span>
+              )}
+              {option.range_delta_miles !== 0 && (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  {option.range_delta_miles > 0 ? "+" : ""}
+                  {option.range_delta_miles} mi range
+                </span>
+              )}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function DeliveryField({
+  name,
+  label,
+  value,
+  error,
+  onChange,
+  type = "text",
+  autoComplete,
+  className,
+}: {
+  name: keyof DeliveryForm;
+  label: string;
+  value: string;
+  error?: string;
+  onChange: (name: keyof DeliveryForm, value: string) => void;
+  type?: string;
+  autoComplete?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("space-y-1.5", className)}>
+      <Label htmlFor={`delivery-${name}`}>{label}</Label>
+      <Input
+        id={`delivery-${name}`}
+        type={type}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(event) => onChange(name, event.target.value)}
+        aria-invalid={Boolean(error)}
+      />
+      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function VehicleConfigurator({
   vehicle,
   groups,
@@ -142,6 +256,10 @@ export function VehicleConfigurator({
 
   const stepIndex = STEPS.findIndex((item) => item.id === step);
 
+  const updateDelivery = React.useCallback((field: keyof DeliveryForm, value: string) => {
+    setDelivery((current) => ({ ...current, [field]: value }));
+  }, []);
+
   function validateDelivery(): boolean {
     const errors: Record<string, string> = {};
     if (delivery.fullName.trim().length < 2) errors.fullName = "Enter the full name";
@@ -193,107 +311,6 @@ export function VehicleConfigurator({
     setReceipt(result.data);
     router.refresh();
     toast.success("Order request recorded", { description: `Reference ${result.data.reference}` });
-  }
-
-  function OptionGrid({
-    kind,
-    value,
-    onChange,
-  }: {
-    kind: VehicleOptionKind;
-    value: string;
-    onChange: (code: string) => void;
-  }) {
-    return (
-      <div role="radiogroup" aria-label={kind} className="grid gap-2 sm:grid-cols-2">
-        {groups[kind].map((option) => {
-          const active = option.code === value;
-          return (
-            <button
-              key={option.id}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              onClick={() => onChange(option.code)}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border p-3.5 text-left transition-colors",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active ? "border-primary bg-primary/6" : "border-border hover:border-primary/40",
-              )}
-            >
-              {option.swatch ? (
-                <span
-                  className="mt-0.5 size-6 shrink-0 rounded-full border border-border"
-                  style={{ backgroundColor: option.swatch }}
-                  aria-hidden
-                />
-              ) : (
-                <span
-                  className={cn(
-                    "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border",
-                    active ? "border-primary bg-primary text-primary-foreground" : "border-input",
-                  )}
-                  aria-hidden
-                >
-                  {active && <Check className="size-3" strokeWidth={3} />}
-                </span>
-              )}
-
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium">{option.name}</span>
-                  <span className="shrink-0 text-sm tabular text-muted-foreground">
-                    {Number(option.price_delta) === 0
-                      ? "Included"
-                      : `+${formatCurrency(Number(option.price_delta), { decimals: 0 })}`}
-                  </span>
-                </span>
-                {option.description && (
-                  <span className="mt-0.5 block text-xs leading-relaxed text-muted-foreground">
-                    {option.description}
-                  </span>
-                )}
-                {option.range_delta_miles !== 0 && (
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    {option.range_delta_miles > 0 ? "+" : ""}
-                    {option.range_delta_miles} mi range
-                  </span>
-                )}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    );
-  }
-
-  function DeliveryField({
-    name,
-    label,
-    type = "text",
-    autoComplete,
-    className,
-  }: {
-    name: keyof DeliveryForm;
-    label: string;
-    type?: string;
-    autoComplete?: string;
-    className?: string;
-  }) {
-    return (
-      <div className={cn("space-y-1.5", className)}>
-        <Label htmlFor={`delivery-${name}`}>{label}</Label>
-        <Input
-          id={`delivery-${name}`}
-          type={type}
-          autoComplete={autoComplete}
-          value={delivery[name]}
-          onChange={(event) => setDelivery((current) => ({ ...current, [name]: event.target.value }))}
-          aria-invalid={Boolean(fieldErrors[name])}
-        />
-        {fieldErrors[name] && <p className="text-xs font-medium text-destructive">{fieldErrors[name]}</p>}
-      </div>
-    );
   }
 
   return (
@@ -352,7 +369,7 @@ export function VehicleConfigurator({
                     Trim sets the drivetrain, battery and performance envelope.
                   </p>
                 </div>
-                <OptionGrid kind="trim" value={trim} onChange={setTrim} />
+                <OptionGrid label="Trim" options={groups.trim} value={trim} onChange={setTrim} />
               </section>
             )}
 
@@ -364,7 +381,7 @@ export function VehicleConfigurator({
                     The illustration above updates with your selection.
                   </p>
                 </div>
-                <OptionGrid kind="exterior" value={exterior} onChange={setExterior} />
+                <OptionGrid label="Paint colour" options={groups.exterior} value={exterior} onChange={setExterior} />
               </section>
             )}
 
@@ -374,7 +391,7 @@ export function VehicleConfigurator({
                   <h2 className="text-base font-semibold">Choose an interior</h2>
                   <p className="mt-1 text-sm text-muted-foreground">Seat and trim finish.</p>
                 </div>
-                <OptionGrid kind="interior" value={interior} onChange={setInterior} />
+                <OptionGrid label="Interior" options={groups.interior} value={interior} onChange={setInterior} />
               </section>
             )}
 
@@ -386,7 +403,7 @@ export function VehicleConfigurator({
                     Larger wheels sharpen handling and reduce range.
                   </p>
                 </div>
-                <OptionGrid kind="wheels" value={wheels} onChange={setWheels} />
+                <OptionGrid label="Wheels" options={groups.wheels} value={wheels} onChange={setWheels} />
               </section>
             )}
 
@@ -491,30 +508,81 @@ export function VehicleConfigurator({
                 ) : (
                   <>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <DeliveryField name="fullName" label="Full name" autoComplete="name" className="sm:col-span-2" />
-                      <DeliveryField name="email" label="Email" type="email" autoComplete="email" />
-                      <DeliveryField name="phone" label="Phone" type="tel" autoComplete="tel" />
+                      <DeliveryField
+                        name="fullName"
+                        label="Full name"
+                        autoComplete="name"
+                        className="sm:col-span-2"
+                        value={delivery.fullName}
+                        error={fieldErrors.fullName}
+                        onChange={updateDelivery}
+                      />
+                      <DeliveryField
+                        name="email"
+                        label="Email"
+                        type="email"
+                        autoComplete="email"
+                        value={delivery.email}
+                        error={fieldErrors.email}
+                        onChange={updateDelivery}
+                      />
+                      <DeliveryField
+                        name="phone"
+                        label="Phone"
+                        type="tel"
+                        autoComplete="tel"
+                        value={delivery.phone}
+                        error={fieldErrors.phone}
+                        onChange={updateDelivery}
+                      />
                       <DeliveryField
                         name="addressLine1"
                         label="Address"
                         autoComplete="address-line1"
                         className="sm:col-span-2"
+                        value={delivery.addressLine1}
+                        error={fieldErrors.addressLine1}
+                        onChange={updateDelivery}
                       />
                       <DeliveryField
                         name="addressLine2"
                         label="Address line 2 (optional)"
                         autoComplete="address-line2"
                         className="sm:col-span-2"
+                        value={delivery.addressLine2}
+                        error={fieldErrors.addressLine2}
+                        onChange={updateDelivery}
                       />
-                      <DeliveryField name="city" label="City" autoComplete="address-level2" />
-                      <DeliveryField name="region" label="State / region" autoComplete="address-level1" />
-                      <DeliveryField name="postalCode" label="Postal code" autoComplete="postal-code" />
+                      <DeliveryField
+                        name="city"
+                        label="City"
+                        autoComplete="address-level2"
+                        value={delivery.city}
+                        error={fieldErrors.city}
+                        onChange={updateDelivery}
+                      />
+                      <DeliveryField
+                        name="region"
+                        label="State / region"
+                        autoComplete="address-level1"
+                        value={delivery.region}
+                        error={fieldErrors.region}
+                        onChange={updateDelivery}
+                      />
+                      <DeliveryField
+                        name="postalCode"
+                        label="Postal code"
+                        autoComplete="postal-code"
+                        value={delivery.postalCode}
+                        error={fieldErrors.postalCode}
+                        onChange={updateDelivery}
+                      />
 
                       <div className="space-y-1.5">
                         <Label htmlFor="delivery-country">Country</Label>
                         <Select
                           value={delivery.country}
-                          onValueChange={(value) => setDelivery((current) => ({ ...current, country: value }))}
+                          onValueChange={(value) => updateDelivery("country", value)}
                         >
                           <SelectTrigger id="delivery-country" aria-invalid={Boolean(fieldErrors.country)}>
                             <SelectValue placeholder="Select country" />

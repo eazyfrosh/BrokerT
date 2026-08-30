@@ -45,7 +45,14 @@ export function NotificationBell({
     toast(notification.title, { description: notification.message });
   });
 
-  React.useEffect(() => setItems(initialItems), [initialItems]);
+  // Adopt a newer server snapshot when the page revalidates. Comparing the
+  // incoming prop against the last one we accepted avoids re-setting state on
+  // every render, which an effect would do.
+  const [lastServerItems, setLastServerItems] = React.useState(initialItems);
+  if (lastServerItems !== initialItems) {
+    setLastServerItems(initialItems);
+    setItems(initialItems);
+  }
 
   function markOne(notification: AppNotification) {
     if (notification.read_at) return;

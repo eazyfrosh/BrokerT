@@ -71,6 +71,12 @@ export function DataTable<T>({
   const [sort, setSort] = React.useState(initialSort);
   const [page, setPage] = React.useState(0);
 
+  // Narrowing the result set should always land the reader on the first page.
+  function search(value: string) {
+    setQuery(value);
+    setPage(0);
+  }
+
   const filtered = React.useMemo(() => {
     if (!searchAccessor || !query.trim()) return data;
     const needle = query.trim().toLowerCase();
@@ -95,8 +101,6 @@ export function DataTable<T>({
   const currentPage = Math.min(page, pageCount - 1);
   const rows = sorted.slice(currentPage * pageSize, currentPage * pageSize + pageSize);
 
-  React.useEffect(() => setPage(0), [query]);
-
   function toggleSort(columnId: string) {
     setSort((prev) => {
       if (prev?.columnId !== columnId) return { columnId, direction: "asc" };
@@ -114,7 +118,7 @@ export function DataTable<T>({
               <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(event) => search(event.target.value)}
                 placeholder={searchPlaceholder}
                 className="pl-8.5"
                 aria-label={searchPlaceholder}

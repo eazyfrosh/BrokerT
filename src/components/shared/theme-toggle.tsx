@@ -13,11 +13,15 @@ import {
 
 export function ThemeToggle({ align = "end" }: { align?: "start" | "center" | "end" }) {
   const { setTheme, theme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  // Theme is only known on the client; render a stable placeholder first so the
-  // server and client markup match.
-  React.useEffect(() => setMounted(true), []);
+  // The resolved theme is only known on the client, so the first client render
+  // must still match the server's markup. useSyncExternalStore gives us a
+  // server snapshot of `false` and a client snapshot of `true` without writing
+  // state from an effect.
+  const mounted = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   return (
     <DropdownMenu>

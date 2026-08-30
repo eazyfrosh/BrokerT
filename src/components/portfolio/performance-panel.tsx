@@ -26,8 +26,13 @@ export function PerformancePanel({ history }: { history: PerformancePoint[] }) {
 
   const points = React.useMemo(() => {
     const spec = RANGES.find((r) => r.value === range);
-    if (!spec?.days) return history;
-    const cutoff = Date.now() - spec.days * 86_400_000;
+    if (!spec?.days || history.length === 0) return history;
+
+    // Window relative to the newest point rather than to the wall clock: the
+    // series ends at the latest snapshot, and reading the clock during render
+    // would make this impure.
+    const latest = new Date(history[history.length - 1].date).getTime();
+    const cutoff = latest - spec.days * 86_400_000;
     return history.filter((point) => new Date(point.date).getTime() >= cutoff);
   }, [history, range]);
 

@@ -47,7 +47,9 @@ export const moneySchema = z
   .finite("Enter a valid amount")
   .positive("Amount must be greater than zero")
   .max(10_000_000, "Amount exceeds the platform limit")
-  .refine((v) => Number.isFinite(v) && Math.round(v * 100) === Number((v * 100).toFixed(0)), {
+  // Both sides of a rounded comparison are always equal, so compare the scaled
+  // value against its own rounding, with a tolerance for binary float error.
+  .refine((v) => Math.abs(v * 100 - Math.round(v * 100)) < 1e-9, {
     message: "Use at most two decimal places",
   });
 

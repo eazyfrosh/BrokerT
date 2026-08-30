@@ -38,16 +38,23 @@ export function SearchCommand() {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  React.useEffect(() => {
-    const trimmed = query.trim();
-    if (trimmed.length < 2) {
+  function onQueryChange(value: string) {
+    setQuery(value);
+    // Decide the pending state here rather than in the effect: below the
+    // threshold there is nothing to fetch, so drop stale results immediately.
+    if (value.trim().length < 2) {
       setResults([]);
       setLoading(false);
-      return;
+    } else {
+      setLoading(true);
     }
+  }
+
+  React.useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) return;
 
     const controller = new AbortController();
-    setLoading(true);
     const timer = setTimeout(async () => {
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(trimmed)}`, {
@@ -106,7 +113,7 @@ export function SearchCommand() {
         <CommandInput
           placeholder="Search orders, strategies, vehicles, markets…"
           value={query}
-          onValueChange={setQuery}
+          onValueChange={onQueryChange}
         />
         <CommandList>
           <CommandEmpty>

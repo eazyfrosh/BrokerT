@@ -3,7 +3,8 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, UserRole } from "@/types/database";
+import { isAdminRole } from "@/lib/roles";
+import type { Profile } from "@/types/database";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 
@@ -50,10 +51,6 @@ export async function requireSession(nextPath?: string): Promise<SessionContext>
   return session;
 }
 
-export function isAdminRole(role: UserRole): boolean {
-  return role === "admin" || role === "super_admin";
-}
-
 /** Redirects non-admins away from the admin area. */
 export async function requireAdmin(): Promise<SessionContext> {
   const session = await requireSession("/admin");
@@ -71,7 +68,5 @@ export async function requireSuperAdmin(): Promise<SessionContext> {
   return session;
 }
 
-export function displayName(profile: Pick<Profile, "first_name" | "last_name" | "email">): string {
-  const full = [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim();
-  return full || profile.email.split("@")[0];
-}
+// Re-exported so server code can keep importing both from one place.
+export { isAdminRole, isSuperAdminRole, displayName } from "@/lib/roles";

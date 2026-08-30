@@ -31,6 +31,37 @@ function slugify(value: string): string {
     .slice(0, 64);
 }
 
+/**
+ * Declared at module scope: a component defined inside the form body would be a
+ * new type on every render, remounting each input and losing focus mid-typing.
+ */
+function Field({
+  name,
+  label,
+  children,
+  hint,
+  error,
+  className,
+}: {
+  name: string;
+  label: string;
+  children: React.ReactNode;
+  hint?: string;
+  error?: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <Label htmlFor={name} className="mb-1.5 block">
+        {label}
+      </Label>
+      {children}
+      {hint && !error && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {error && <p className="mt-1 text-xs font-medium text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 export function InvestmentForm({ investment }: { investment?: Investment }) {
   const router = useRouter();
   const [saving, setSaving] = React.useState(false);
@@ -91,35 +122,6 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
     router.refresh();
   }
 
-  function Field({
-    name: fieldName,
-    label,
-    children,
-    hint,
-    className,
-  }: {
-    name: string;
-    label: string;
-    children: React.ReactNode;
-    hint?: string;
-    className?: string;
-  }) {
-    return (
-      <div className={className}>
-        <Label htmlFor={fieldName} className="mb-1.5 block">
-          {label}
-        </Label>
-        {children}
-        {hint && !fieldErrors[fieldName] && (
-          <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
-        )}
-        {fieldErrors[fieldName] && (
-          <p className="mt-1 text-xs font-medium text-destructive">{fieldErrors[fieldName]}</p>
-        )}
-      </div>
-    );
-  }
-
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
       {error && (
@@ -133,7 +135,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
         <legend className="text-sm font-semibold">Identity</legend>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field name="name" label="Name">
+          <Field name="name" error={fieldErrors.name} label="Name">
             <Input
               id="name"
               name="name"
@@ -146,7 +148,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="slug" label="Slug" hint="Used in the public URL.">
+          <Field name="slug" error={fieldErrors.slug} label="Slug" hint="Used in the public URL.">
             <Input
               id="slug"
               name="slug"
@@ -161,16 +163,16 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field name="category" label="Category">
+          <Field name="category" error={fieldErrors.category} label="Category">
             <Input id="category" name="category" defaultValue={investment?.category ?? "Thematic"} required />
           </Field>
 
-          <Field name="imageUrl" label="Image URL (optional)">
+          <Field name="imageUrl" error={fieldErrors.imageUrl} label="Image URL (optional)">
             <Input id="imageUrl" name="imageUrl" type="url" defaultValue={investment?.image_url ?? ""} />
           </Field>
         </div>
 
-        <Field name="summary" label="Summary" hint="One or two sentences shown on the strategy card.">
+        <Field name="summary" error={fieldErrors.summary} label="Summary" hint="One or two sentences shown on the strategy card.">
           <Textarea id="summary" name="summary" rows={2} defaultValue={investment?.summary ?? ""} required />
         </Field>
       </fieldset>
@@ -180,11 +182,11 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
       <fieldset className="space-y-4">
         <legend className="text-sm font-semibold">Description</legend>
 
-        <Field name="objective" label="Investment objective">
+        <Field name="objective" error={fieldErrors.objective} label="Investment objective">
           <Textarea id="objective" name="objective" rows={3} defaultValue={investment?.objective ?? ""} />
         </Field>
 
-        <Field name="description" label="Overview">
+        <Field name="description" error={fieldErrors.description} label="Overview">
           <Textarea id="description" name="description" rows={5} defaultValue={investment?.description ?? ""} />
         </Field>
       </fieldset>
@@ -209,7 +211,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="durationMonths" label="Target duration (months)">
+          <Field name="durationMonths" error={fieldErrors.durationMonths} label="Target duration (months)">
             <Input
               id="durationMonths"
               name="durationMonths"
@@ -219,7 +221,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="riskLevel" label="Risk level">
+          <Field name="riskLevel" error={fieldErrors.riskLevel} label="Risk level">
             <Select value={riskLevel} onValueChange={setRiskLevel}>
               <SelectTrigger id="riskLevel">
                 <SelectValue />
@@ -234,7 +236,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             </Select>
           </Field>
 
-          <Field name="minimumAmount" label="Minimum amount">
+          <Field name="minimumAmount" error={fieldErrors.minimumAmount} label="Minimum amount">
             <Input
               id="minimumAmount"
               name="minimumAmount"
@@ -244,7 +246,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="maximumAmount" label="Maximum amount" hint="Leave empty for no maximum.">
+          <Field name="maximumAmount" error={fieldErrors.maximumAmount} label="Maximum amount" hint="Leave empty for no maximum.">
             <Input
               id="maximumAmount"
               name="maximumAmount"
@@ -253,7 +255,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="capacityAmount" label="Capacity" hint="Leave empty for uncapped.">
+          <Field name="capacityAmount" error={fieldErrors.capacityAmount} label="Capacity" hint="Leave empty for uncapped.">
             <Input
               id="capacityAmount"
               name="capacityAmount"
@@ -262,7 +264,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="managementFeePct" label="Management fee (%)">
+          <Field name="managementFeePct" error={fieldErrors.managementFeePct} label="Management fee (%)">
             <Input
               id="managementFeePct"
               name="managementFeePct"
@@ -272,7 +274,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="performanceFeePct" label="Performance fee (%)">
+          <Field name="performanceFeePct" error={fieldErrors.performanceFeePct} label="Performance fee (%)">
             <Input
               id="performanceFeePct"
               name="performanceFeePct"
@@ -282,7 +284,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
             />
           </Field>
 
-          <Field name="status" label="Status">
+          <Field name="status" error={fieldErrors.status} label="Status">
             <Select value={status} onValueChange={setStatus}>
               <SelectTrigger id="status">
                 <SelectValue />
@@ -310,7 +312,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
           promised or assured.
         </div>
 
-        <Field name="riskDisclosure" label="Risk disclosure">
+        <Field name="riskDisclosure" error={fieldErrors.riskDisclosure} label="Risk disclosure">
           <Textarea
             id="riskDisclosure"
             name="riskDisclosure"
@@ -320,7 +322,7 @@ export function InvestmentForm({ investment }: { investment?: Investment }) {
           />
         </Field>
 
-        <Field name="terms" label="Terms">
+        <Field name="terms" error={fieldErrors.terms} label="Terms">
           <Textarea id="terms" name="terms" rows={4} defaultValue={investment?.terms ?? ""} />
         </Field>
       </fieldset>

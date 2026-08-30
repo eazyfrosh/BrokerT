@@ -18,9 +18,21 @@ export function useRealtimeNotifications(
 ) {
   const [unread, setUnread] = React.useState(initialUnread);
   const callbackRef = React.useRef(onNotification);
-  callbackRef.current = onNotification;
 
-  React.useEffect(() => setUnread(initialUnread), [initialUnread]);
+  // Writing a ref during render is not safe under concurrent rendering; keep
+  // the latest callback in sync from an effect instead.
+  React.useEffect(() => {
+    callbackRef.current = onNotification;
+  }, [onNotification]);
+
+  // The server-rendered count is the source of truth: adopt it whenever the
+  // page revalidates, keyed off the value itself rather than an effect body
+  // that calls setState unconditionally.
+  const [lastServerCount, setLastServerCount] = React.useState(initialUnread);
+  if (lastServerCount !== initialUnread) {
+    setLastServerCount(initialUnread);
+    setUnread(initialUnread);
+  }
 
   React.useEffect(() => {
     const supabase = getSupabaseBrowserClient();

@@ -57,9 +57,13 @@ export function PriceChart({
   const containerRef = React.useRef<HTMLDivElement>(null);
   const chartRef = React.useRef<IChartApi | null>(null);
   const { resolvedTheme } = useTheme();
-  const [ready, setReady] = React.useState(false);
-
-  React.useEffect(() => setReady(true), []);
+  // The chart library touches the DOM and reads computed styles, so it must not
+  // run during the server render or the first hydration pass.
+  const ready = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   React.useEffect(() => {
     const container = containerRef.current;

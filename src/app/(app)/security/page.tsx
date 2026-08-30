@@ -86,7 +86,7 @@ export default async function SecurityPage() {
                 </Badge>
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                The account model and interface already carry a two-factor flag, and the platform's
+                The account model and interface already carry a two-factor flag, and the platform&apos;s
                 identity provider supports TOTP enrolment. Enrolment is not switched on in demo mode
                 because it would lock demo accounts out of a simulated environment with no recovery path.
               </p>

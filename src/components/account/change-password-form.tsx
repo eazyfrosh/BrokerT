@@ -15,10 +15,13 @@ export function ChangePasswordForm() {
   const [password, setPassword] = React.useState("");
   const fieldErrors = state && !state.ok ? state.fieldErrors : undefined;
 
-  // Clear the new-password field once the change is accepted.
-  React.useEffect(() => {
+  // Clear the new-password field once a change is accepted. Comparing against
+  // the last result we handled keeps this out of an effect.
+  const [handled, setHandled] = React.useState(state);
+  if (handled !== state) {
+    setHandled(state);
     if (state?.ok) setPassword("");
-  }, [state]);
+  }
 
   return (
     <form action={formAction} className="space-y-4" noValidate>

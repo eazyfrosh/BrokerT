@@ -58,7 +58,13 @@ export function NotificationsList({ notifications }: { notifications: AppNotific
   const [items, setItems] = React.useState(notifications);
   const [pending, startTransition] = React.useTransition();
 
-  React.useEffect(() => setItems(notifications), [notifications]);
+  // Adopt a newer server snapshot when the page revalidates, without an effect
+  // that calls setState on every render.
+  const [lastServerItems, setLastServerItems] = React.useState(notifications);
+  if (lastServerItems !== notifications) {
+    setLastServerItems(notifications);
+    setItems(notifications);
+  }
 
   const counts = React.useMemo(
     () =>

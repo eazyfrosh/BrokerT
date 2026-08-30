@@ -9,7 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { CopyButton } from "@/components/shared/copy-button";
-import { EmptyState } from "@/components/shared/empty-state";
 import { CancelOrderButton } from "@/components/orders/cancel-order-button";
 import { getMyOrder, isCancellable } from "@/lib/services/orders";
 import { formatCurrency, formatDateTime, formatQuantity, titleCase } from "@/lib/format";

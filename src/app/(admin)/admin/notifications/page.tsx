@@ -37,7 +37,7 @@ export default async function AdminNotificationsPage() {
           </CardHeader>
           <CardContent className="space-y-3 text-sm leading-relaxed text-muted-foreground">
             <p>
-              Notifications are written straight to each recipient's account and appear immediately in
+              Notifications are written straight to each recipient&apos;s account and appear immediately in
               their notification centre. They cannot be recalled or edited afterwards.
             </p>
             <p>
