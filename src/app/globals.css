@@ -48,13 +48,18 @@
   --gain: oklch(0.58 0.16 152);
   --loss: oklch(0.58 0.21 27);
 
-  /* Chart palette */
-  --chart-1: oklch(0.52 0.19 264);
-  --chart-2: oklch(0.62 0.15 152);
-  --chart-3: oklch(0.72 0.16 75);
-  --chart-4: oklch(0.58 0.21 27);
-  --chart-5: oklch(0.62 0.13 220);
-  --chart-6: oklch(0.55 0.16 310);
+  /* Categorical chart palette.
+     Fixed assignment order, never cycled. Validated for the OKLCH lightness
+     band, chroma floor, adjacent-pair CVD separation (deutan/protan/tritan),
+     normal-vision separation and 3:1 contrast against the light surface.
+     Gain/loss above are reserved status colours and are never used as a
+     categorical slot. */
+  --chart-1: oklch(0.52 0.19 264);   /* blue   */
+  --chart-2: oklch(0.66 0.14 88);    /* amber  */
+  --chart-3: oklch(0.55 0.21 25);    /* red    */
+  --chart-4: oklch(0.6 0.13 200);    /* teal   */
+  --chart-5: oklch(0.54 0.18 315);   /* violet */
+  --chart-6: oklch(0.6 0.155 150);   /* green  */
 
   --sidebar: oklch(0.985 0.002 260);
   --sidebar-foreground: oklch(0.25 0.01 260);
@@ -99,12 +104,13 @@
   --gain: oklch(0.72 0.16 152);
   --loss: oklch(0.68 0.19 22);
 
-  --chart-1: oklch(0.68 0.17 264);
-  --chart-2: oklch(0.72 0.16 152);
-  --chart-3: oklch(0.78 0.15 75);
-  --chart-4: oklch(0.68 0.19 22);
-  --chart-5: oklch(0.7 0.13 220);
-  --chart-6: oklch(0.68 0.16 310);
+  /* Dark steps are selected against the dark surface, not flipped from light. */
+  --chart-1: oklch(0.62 0.18 264);
+  --chart-2: oklch(0.655 0.14 90);
+  --chart-3: oklch(0.56 0.21 22);
+  --chart-4: oklch(0.66 0.13 197);
+  --chart-5: oklch(0.55 0.19 318);
+  --chart-6: oklch(0.64 0.16 150);
 
   --sidebar: oklch(0.178 0.008 260);
   --sidebar-foreground: oklch(0.9 0.005 260);

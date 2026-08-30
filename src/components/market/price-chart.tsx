@@ -169,7 +169,7 @@ export function PriceChart({
     // ---- Overlays -----------------------------------------------------
     if (indicators.includes("sma")) {
       const line = chart.addSeries(LineSeries, {
-        color: cssVar("--chart-3", "#f59e0b"),
+        color: cssVar("--chart-2", "#b68c00"),
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -178,7 +178,7 @@ export function PriceChart({
     }
     if (indicators.includes("ema")) {
       const line = chart.addSeries(LineSeries, {
-        color: cssVar("--chart-5", "#0ea5e9"),
+        color: cssVar("--chart-4", "#00969f"),
         lineWidth: 1,
         priceLineVisible: false,
         lastValueVisible: false,
@@ -189,7 +189,7 @@ export function PriceChart({
     // RSI and MACD live on their own scale so they never distort the price axis.
     if (indicators.includes("rsi")) {
       const line = chart.addSeries(LineSeries, {
-        color: cssVar("--chart-6", "#a855f7"),
+        color: cssVar("--chart-5", "#9545b5"),
         lineWidth: 1,
         priceScaleId: "oscillator",
         priceLineVisible: false,
@@ -211,7 +211,7 @@ export function PriceChart({
         lastValueVisible: false,
       });
       const signalLine = chart.addSeries(LineSeries, {
-        color: cssVar("--chart-3", "#f59e0b"),
+        color: cssVar("--chart-2", "#b68c00"),
         lineWidth: 1,
         priceScaleId: "macd",
         priceLineVisible: false,
