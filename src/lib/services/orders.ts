@@ -45,7 +45,4 @@ export async function getMyOrder(id: string): Promise<{ order: OrderWithAsset; f
   return { order, fills: fills ?? [] };
 }
 
-/** Statuses a user is allowed to cancel from. */
-export function isCancellable(status: OrderStatus): boolean {
-  return status === "pending" || status === "submitted" || status === "partially_filled";
-}
+export { isCancellable } from "./orders-shared";
