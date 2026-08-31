@@ -179,6 +179,11 @@ supabase db push
 | `0003_rls.sql` | Row Level Security policies, guard triggers, realtime publication |
 | `0004_seed_reference_data.sql` | Instrument, five years of simulated candles, six strategies, vehicle catalogue, platform settings |
 | `0005_resting_orders.sql` | Settles resting limit and stop orders once the market reaches their price |
+| `0006_guard_trusted_paths.sql` | Lets the service role through the column guards so the first admin can be created |
+| `0007_grants.sql` | Explicit table privileges, so the schema does not depend on Supabase's defaults |
+
+Or paste **`supabase/setup.sql`** — all of them concatenated in order, with a
+verification block at the end — into the SQL editor in one go.
 
 They are written to be safely re-runnable: enum creation is guarded, tables use
 `create table if not exists`, policies are dropped before being recreated, and the candle generator
@@ -213,9 +218,20 @@ money and identity so even a table-owner connection is subject to it.
   internal notes from customers, and restrict notification updates to the `read_at` column.
 - `audit_logs` is admin-readable and rejects every UPDATE and DELETE via a trigger.
 
-`tests/authorization.test.ts` asserts each of these guarantees is actually declared in the
-migrations. Those are static assertions over the SQL — they catch a policy being dropped or
-weakened, but they are not a substitute for exercising the policies against a live database.
+`tests/authorization.test.ts` asserts each of these guarantees is declared in the migrations, and
+`tests/migrations.test.ts` catches SQL that would fail at runtime. Static checks only go so far, so:
+
+```bash
+npm run verify:db      # requires postgresql-16 server binaries
+```
+
+This starts a throwaway Postgres, applies a minimal stand-in for the parts of Supabase the
+migrations touch, runs every migration, re-runs them to prove idempotency, and then exercises the
+real thing: a market buy fills; a buy beyond available cash and an oversized sell are rejected; one
+customer cannot see another's orders; a customer cannot change their own role; a direct wallet
+write, a forged ledger row and a forged holding are all refused; the audit log is unreadable to a
+non-admin; a resting limit order rests; a non-admin cannot call an admin function; and the service
+role can still promote the first administrator.
 
 ---
 
@@ -323,6 +339,7 @@ order request. Every template carries the demo-mode banner while demo mode is on
 | `npm test` | Vitest, once |
 | `npm run test:watch` | Vitest, watching |
 | `npm run check` | Typecheck, lint and test — run this before pushing |
+| `npm run verify:db` | Run the migrations against a throwaway Postgres and exercise them |
 | `npm run setup:admin -- <email>` | Promote an existing account to super admin |
 | `npm run seed:demo` | Create fictional demo accounts |
 
@@ -347,8 +364,10 @@ npm test
 | `format.test.ts` | Currency, percentage and reference formatting; rounding |
 | `authorization.test.ts` | Role helpers, and assertions that the RLS policies, guard triggers, locking and audit calls are declared in the migrations |
 
-Not covered by the unit suite: RLS behaviour against a live Postgres, and browser end-to-end flows.
-Both are on the production checklist.
+| `migrations.test.ts` | SQL that would fail at runtime: `round()` type mismatches, missing guard exemptions, non-re-runnable DDL |
+
+RLS behaviour against a live Postgres is covered separately by `npm run verify:db`. Browser
+end-to-end flows are not covered and remain on the production checklist.
 
 ---
 
@@ -387,7 +406,7 @@ Do not put this in front of real customers without working through all of it.
 
 **Security**
 - [ ] Enable TOTP enrolment and require it for every administrative role.
-- [ ] Exercise the RLS policies against a live database with at least two non-admin accounts.
+- [ ] Run `npm run verify:db` in CI so a weakened policy fails the build.
 - [ ] Put rate limiting in front of the auth routes and the search and quote endpoints.
 - [ ] Rotate `ADMIN_SETUP_SECRET` and confirm `/api/admin/setup` returns 404.
 - [ ] Confirm the service-role key is absent from every client bundle.

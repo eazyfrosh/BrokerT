@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run test",
     "setup:admin": "node scripts/setup-admin.mjs",
-    "seed:demo": "node scripts/seed-demo.mjs"
+    "seed:demo": "node scripts/seed-demo.mjs",
+    "verify:db": "bash scripts/verify-db.sh"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

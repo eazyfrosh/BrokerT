@@ -77,8 +77,10 @@ begin
     v_drift := 0.0004;
     v_shock := (random() - 0.5) * 0.055 + (case when random() < 0.02 then (random() - 0.5) * 0.12 else 0 end);
     v_close := greatest(round((v_open * (1 + v_drift + v_shock))::numeric, 2), 5.00);
-    v_high := round(greatest(v_open, v_close) * (1 + random() * 0.018), 2);
-    v_low := round(least(v_open, v_close) * (1 - random() * 0.018), 2);
+    -- random() is double precision, and round(double precision, int) does not
+    -- exist in Postgres — only round(numeric, int). Cast before rounding.
+    v_high := round((greatest(v_open, v_close) * (1 + random() * 0.018))::numeric, 2);
+    v_low := round((least(v_open, v_close) * (1 - random() * 0.018))::numeric, 2);
     v_vol := (55_000_000 + random() * 90_000_000)::bigint;
 
     insert into public.market_candles (asset_id, interval, bucket_start, open, high, low, close, volume, is_simulated)
