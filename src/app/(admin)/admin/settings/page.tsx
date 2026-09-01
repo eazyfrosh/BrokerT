@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { SetupNotice } from "@/components/shared/setup-notice";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { formatDateTime } from "@/lib/format";
 import { APP, DEMO_MODE, publicEnv, serverEnv } from "@/lib/config";
 import type { SystemSetting } from "@/types/database";
@@ -28,7 +29,7 @@ export default async function AdminSettingsPage() {
     ["Supabase URL", publicEnv.supabaseUrl ? "Configured" : "Not set"],
     ["Supabase anon key", publicEnv.supabaseAnonKey ? "Configured" : "Not set"],
     ["Service role key", env.supabaseServiceRoleKey ? "Configured (server only)" : "Not set"],
-    ["Application origin", publicEnv.appUrl],
+    ["Application origin", await getRequestOrigin()],
     ["Demo mode", DEMO_MODE ? "On" : "Off"],
     ["Market data provider", env.marketDataProvider],
     ["Market data API key", env.marketDataApiKey ? "Configured" : "Not set"],

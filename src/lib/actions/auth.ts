@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessionContext } from "@/lib/auth";
-import { publicEnv } from "@/lib/config";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { sendEmail, welcomeEmail, securityAlertEmail } from "@/lib/email";
 import {
   registerSchema,
@@ -62,11 +62,15 @@ export async function registerAction(_prev: unknown, formData: FormData): Promis
 
   const { firstName, lastName, email, password, country, phone } = parsed.data;
 
+  // Built from the live request, so a preview deployment's confirmation email
+  // links back to that preview rather than to localhost or to production.
+  const origin = await getRequestOrigin();
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      emailRedirectTo: `${publicEnv.appUrl}/auth/callback?next=/dashboard`,
+      emailRedirectTo: `${origin}/auth/callback?next=/dashboard`,
       // Read by the handle_new_user() trigger to populate the profile row.
       data: { first_name: firstName, last_name: lastName, country, phone },
     },
@@ -79,7 +83,7 @@ export async function registerAction(_prev: unknown, formData: FormData): Promis
   }
 
   if (data.user) {
-    await sendEmail(welcomeEmail(email, firstName, publicEnv.appUrl));
+    await sendEmail(welcomeEmail(email, firstName, origin));
   }
 
   // With email confirmation enabled there is no session yet.
@@ -144,7 +148,7 @@ export async function forgotPasswordAction(_prev: unknown, formData: FormData): 
   if (!supabase) return fail("The platform is not connected to its database yet. See the README for setup.");
 
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${publicEnv.appUrl}/auth/callback?next=/reset-password`,
+    redirectTo: `${await getRequestOrigin()}/auth/callback?next=/reset-password`,
   });
 
   // Always the same response, whether or not the address exists.
@@ -173,7 +177,7 @@ export async function resetPasswordAction(_prev: unknown, formData: FormData): P
   if (error) return fail(error.message || "We could not update your password.");
 
   await recordLoginEvent(user.id, "password_reset");
-  if (user.email) await sendEmail(securityAlertEmail(user.email, "Password reset", publicEnv.appUrl));
+  if (user.email) await sendEmail(securityAlertEmail(user.email, "Password reset", await getRequestOrigin()));
 
   redirect("/dashboard");
 }
@@ -206,7 +210,7 @@ export async function changePasswordAction(_prev: unknown, formData: FormData): 
 
   await Promise.all([
     recordLoginEvent(session.user.id, "password_change"),
-    sendEmail(securityAlertEmail(session.profile.email, "Password changed", publicEnv.appUrl)),
+    sendEmail(securityAlertEmail(session.profile.email, "Password changed", await getRequestOrigin())),
     session.supabase.from("notifications").insert({
       user_id: session.user.id,
       type: "security_alert",

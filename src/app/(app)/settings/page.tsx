@@ -5,7 +5,8 @@ import { SetupNotice } from "@/components/shared/setup-notice";
 import { SettingsForm } from "@/components/account/settings-form";
 import { getMySettings } from "@/lib/services/account";
 import { requireSession } from "@/lib/auth";
-import { APP, DEMO_MODE, publicEnv } from "@/lib/config";
+import { getRequestOrigin } from "@/lib/request-origin";
+import { APP, DEMO_MODE } from "@/lib/config";
 
 export const metadata: Metadata = { title: "Settings" };
 export const dynamic = "force-dynamic";
@@ -41,7 +42,7 @@ export default async function SettingsPage() {
                 ["Market data", "Simulated demo engine"],
                 ["Base currency", settings?.base_currency ?? "USD"],
                 ["Application", APP.name],
-                ["Origin", publicEnv.appUrl],
+                ["Origin", await getRequestOrigin()],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                   <dt className="text-muted-foreground">{label}</dt>

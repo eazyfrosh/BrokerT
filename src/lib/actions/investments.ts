@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionContext } from "@/lib/auth";
 import { allocateInvestmentSchema } from "@/lib/validation/schemas";
-import { publicEnv } from "@/lib/config";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { sendEmail, investmentUpdateEmail } from "@/lib/email";
 import { formatCurrency } from "@/lib/format";
 import { ok, fail, fromZodError, fromDatabaseError, type ActionResult } from "./result";
@@ -62,7 +62,7 @@ export async function allocateInvestmentAction(input: unknown): Promise<ActionRe
         reference: position.reference,
         amount: formatCurrency(parsed.data.amount),
       },
-      publicEnv.appUrl,
+      await getRequestOrigin(),
     ),
   ).catch(() => undefined);
 

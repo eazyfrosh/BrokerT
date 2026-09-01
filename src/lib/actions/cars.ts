@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionContext } from "@/lib/auth";
 import { carOrderSchema, uuidSchema } from "@/lib/validation/schemas";
-import { publicEnv } from "@/lib/config";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { sendEmail, carOrderEmail } from "@/lib/email";
 import { formatCurrency } from "@/lib/format";
 import { round } from "@/lib/utils";
@@ -120,7 +120,7 @@ export async function submitCarOrderAction(input: unknown): Promise<ActionResult
     carOrderEmail(
       session.profile.email,
       { reference: order.reference, model: vehicle.model_name, total: formatCurrency(total) },
-      publicEnv.appUrl,
+      await getRequestOrigin(),
     ),
   ).catch(() => undefined);
 

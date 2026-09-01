@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getSessionContext } from "@/lib/auth";
 import { placeOrderSchema, cancelOrderSchema } from "@/lib/validation/schemas";
-import { publicEnv } from "@/lib/config";
+import { getRequestOrigin } from "@/lib/request-origin";
 import { sendEmail, orderConfirmationEmail } from "@/lib/email";
 import { formatCurrency, formatQuantity } from "@/lib/format";
 import { ok, fail, fromZodError, fromDatabaseError, type ActionResult } from "./result";
@@ -79,7 +79,7 @@ export async function placeOrderAction(input: unknown): Promise<ActionResult<Pla
           price: formatCurrency(order.average_fill_price),
           total: formatCurrency(order.quantity * order.average_fill_price),
         },
-        publicEnv.appUrl,
+        await getRequestOrigin(),
       ),
     ).catch(() => undefined);
   }
