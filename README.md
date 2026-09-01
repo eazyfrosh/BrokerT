@@ -340,6 +340,11 @@ order request. Every template carries the demo-mode banner while demo mode is on
 | `npm run test:watch` | Vitest, watching |
 | `npm run check` | Typecheck, lint and test — run this before pushing |
 | `npm run verify:db` | Run the migrations against a throwaway Postgres and exercise them |
+
+Deployed instances expose **`/api/health`**, which reports whether each piece of configuration is
+present and whether the database answers — enough to diagnose a deployment without reading the
+logs. It returns booleans, the Supabase project host and the names of any unreachable tables; never
+a key, a key fragment, or customer data.
 | `npm run setup:admin -- <email>` | Promote an existing account to super admin |
 | `npm run seed:demo` | Create fictional demo accounts |
 
@@ -376,8 +381,21 @@ end-to-end flows are not covered and remain on the production checklist.
 1. Import the repository.
 2. Add every variable from [Environment variables](#environment-variables) to the project. Set
    `NEXT_PUBLIC_APP_URL` to the deployment origin.
-3. Add that origin to Supabase → Authentication → URL Configuration.
-4. Deploy. Build and start commands are the defaults.
+3. In Supabase → **Authentication → URL Configuration**, set the Site URL to your production
+   origin and add a redirect wildcard covering previews, whose hostname changes on every
+   deployment:
+
+   ```
+   https://your-app.vercel.app/**
+   https://your-app-*.vercel.app/**
+   ```
+
+   Without the wildcard Supabase ignores the requested redirect and silently falls back to the
+   Site URL.
+4. Leave `NEXT_PUBLIC_APP_URL` unset. Auth links are built from the request, so each deployment
+   links back to itself; setting it pins every preview to one origin.
+5. Deploy. Build and start commands are the defaults.
+6. Open `/api/health` on the deployment to confirm configuration and database connectivity.
 
 The app is Vercel-compatible with no adapter: Server Components and Server Actions for the product
 surface, route handlers for the polled quote endpoint and the search endpoint, and `src/proxy.ts`

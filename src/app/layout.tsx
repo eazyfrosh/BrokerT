@@ -10,6 +10,8 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], dis
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
+  // publicEnv.appUrl is validated as a URL, so this cannot throw and take the
+  // whole application down over a metadata detail.
   metadataBase: new URL(publicEnv.appUrl),
   title: {
     default: `${APP.name} — ${APP.tagline}`,

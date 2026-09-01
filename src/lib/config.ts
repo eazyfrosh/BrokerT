@@ -10,10 +10,37 @@ function readPublic(name: string): string | undefined {
   return value && value.length > 0 ? value : undefined;
 }
 
+/**
+ * A Supabase URL must be an absolute http(s) URL. Pasting the bare hostname —
+ * `abcdefgh.supabase.co` rather than `https://abcdefgh.supabase.co` — is an
+ * easy mistake, and the Supabase client throws on it. Left unchecked that
+ * exception surfaces on every page as a generic failure, which tells the
+ * operator nothing. Validate here so a misconfiguration is reported as a
+ * misconfiguration.
+ */
+function readUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return undefined;
+    return trimmed;
+  } catch {
+    return undefined;
+  }
+}
+
+/** True when the variable was provided but is not a usable URL. */
+export function supabaseUrlIsMalformed(): boolean {
+  const raw = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return Boolean(raw && raw.trim() && !readUrl(raw));
+}
+
 export const publicEnv = {
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
+  supabaseUrl: readUrl(process.env.NEXT_PUBLIC_SUPABASE_URL),
+  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim() || undefined,
+  appUrl: readUrl(process.env.NEXT_PUBLIC_APP_URL) ?? "http://localhost:3000",
   /** Demo mode defaults to ON so a fresh clone never implies real money movement. */
   demoMode: process.env.NEXT_PUBLIC_DEMO_MODE !== "false",
 } as const;
@@ -41,7 +68,7 @@ export const APP = {
 /** Server-only secrets. Never import this module from a Client Component. */
 export function serverEnv() {
   return {
-    supabaseUrl: readPublic("NEXT_PUBLIC_SUPABASE_URL"),
+    supabaseUrl: readUrl(process.env.NEXT_PUBLIC_SUPABASE_URL),
     supabaseAnonKey: readPublic("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     supabaseServiceRoleKey: readPublic("SUPABASE_SERVICE_ROLE_KEY"),
     resendApiKey: readPublic("RESEND_API_KEY"),

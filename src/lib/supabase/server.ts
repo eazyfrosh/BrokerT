@@ -15,7 +15,11 @@ export async function createClient(): Promise<SupabaseClient | null> {
 
   const cookieStore = await cookies();
 
-  return createServerClient(publicEnv.supabaseUrl!, publicEnv.supabaseAnonKey!, {
+  // A bad URL or key makes the client constructor throw. Degrading to the
+  // "not configured" path shows the operator a setup notice instead of a
+  // generic failure on every route.
+  try {
+    return createServerClient(publicEnv.supabaseUrl!, publicEnv.supabaseAnonKey!, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -26,12 +30,16 @@ export async function createClient(): Promise<SupabaseClient | null> {
             cookieStore.set(name, value, options);
           }
         } catch {
-          // Called from a Server Component: the middleware refreshes the
-          // session cookie instead, so this is safe to ignore.
+          // Called from a Server Component: the proxy refreshes the session
+          // cookie instead, so this is safe to ignore.
         }
       },
     },
-  });
+    });
+  } catch (error) {
+    console.error("[supabase] could not create the server client:", (error as Error).message);
+    return null;
+  }
 }
 
 export async function requireClient(): Promise<SupabaseClient> {
@@ -53,7 +61,12 @@ export function createServiceRoleClient(): SupabaseClient | null {
   const env = serverEnv();
   if (!env.supabaseUrl || !env.supabaseServiceRoleKey) return null;
 
-  return createSupabaseClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  });
+  try {
+    return createSupabaseClient(env.supabaseUrl, env.supabaseServiceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+  } catch (error) {
+    console.error("[supabase] could not create the service-role client:", (error as Error).message);
+    return null;
+  }
 }

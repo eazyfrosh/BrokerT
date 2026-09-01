@@ -14,7 +14,12 @@ let cached: SupabaseClient | null = null;
 export function getSupabaseBrowserClient(): SupabaseClient | null {
   if (!isSupabaseConfigured) return null;
   if (cached) return cached;
-  cached = createBrowserClient(publicEnv.supabaseUrl!, publicEnv.supabaseAnonKey!);
+  try {
+    cached = createBrowserClient(publicEnv.supabaseUrl!, publicEnv.supabaseAnonKey!);
+  } catch (error) {
+    console.error("[supabase] could not create the browser client:", (error as Error).message);
+    return null;
+  }
   return cached;
 }
 

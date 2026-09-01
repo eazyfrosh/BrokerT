@@ -89,3 +89,45 @@ describe("email link origin", () => {
     }
   });
 });
+
+/**
+ * A configuration mistake must never surface as a generic failure on every
+ * route. The Supabase client throws on a URL without a scheme — an easy paste
+ * error — and that exception previously reached the error boundary.
+ */
+describe("configuration resilience", () => {
+  const CONFIG = readFileSync("src/lib/config.ts", "utf8");
+  const SERVER = readFileSync("src/lib/supabase/server.ts", "utf8");
+  const BROWSER = readFileSync("src/lib/supabase/client.ts", "utf8");
+  const HEALTH = readFileSync("src/app/api/health/route.ts", "utf8");
+
+  it("rejects a supabase URL that is not absolute http(s)", () => {
+    expect(CONFIG).toContain("function readUrl");
+    expect(CONFIG).toContain('parsed.protocol !== "http:" && parsed.protocol !== "https:"');
+  });
+
+  it("can tell a malformed URL apart from a missing one", () => {
+    expect(CONFIG).toContain("export function supabaseUrlIsMalformed");
+  });
+
+  it("never lets client construction escape as an exception", () => {
+    for (const [name, source] of [
+      ["server", SERVER],
+      ["browser", BROWSER],
+    ] as const) {
+      expect(source, `${name} client must catch a constructor throw`).toMatch(/catch\s*\(error\)/);
+    }
+  });
+
+  it("reports configuration state without exposing any secret", () => {
+    expect(HEALTH).toContain("supabaseAnonKey: publicEnv.supabaseAnonKey ? \"ok\" : \"missing\"");
+    // Only the host is ever echoed back, never a key or a full URL with auth.
+    expect(HEALTH).toContain("new URL(publicEnv.supabaseUrl).host");
+    expect(HEALTH).not.toMatch(/serviceRoleKey:\s*env\.supabaseServiceRoleKey\b(?!\s*\?)/);
+  });
+
+  it("names the tables that are unreachable when migrations are missing", () => {
+    expect(HEALTH).toContain("run supabase/setup.sql");
+    expect(HEALTH).toContain("unreachableTables");
+  });
+});
