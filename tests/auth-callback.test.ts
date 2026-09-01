@@ -131,3 +131,45 @@ describe("configuration resilience", () => {
     expect(HEALTH).toContain("unreachableTables");
   });
 });
+
+/**
+ * A valid session with no profile row used to produce an endless redirect:
+ * requireSession sent the person to /login, and the proxy — seeing a valid
+ * session on an auth route — sent them straight back.
+ */
+describe("missing profile recovery", () => {
+  const AUTH = readFileSync("src/lib/auth.ts", "utf8");
+  const PROXY = readFileSync("src/proxy.ts", "utf8");
+  const ENSURE = readFileSync("supabase/migrations/0008_ensure_profile.sql", "utf8");
+
+  it("attempts to provision the profile before giving up", () => {
+    expect(AUTH).toContain('supabase.rpc("ensure_profile")');
+  });
+
+  it("routes an unprovisionable session to an explanation, never to sign-in", () => {
+    expect(AUTH).toContain('redirect("/account-setup-required")');
+    // The old behaviour: returning null here, which requireSession read as
+    // "signed out" and bounced to /login.
+    expect(AUTH).not.toMatch(/if \(!profile\) return null;/);
+  });
+
+  it("keeps that page clear of both redirect sets, so nothing bounces off it", () => {
+    const protectedList = PROXY.slice(PROXY.indexOf("PROTECTED_PREFIXES"), PROXY.indexOf("AUTH_ROUTES"));
+    const authList = PROXY.slice(PROXY.indexOf("AUTH_ROUTES"), PROXY.indexOf("function matchesPrefix"));
+    expect(protectedList).not.toContain("account-setup-required");
+    expect(authList).not.toContain("account-setup-required");
+  });
+
+  it("provisions everything the trigger would, idempotently", () => {
+    for (const table of ["profiles", "user_settings", "wallets", "portfolios", "watchlists"]) {
+      expect(ENSURE).toContain(`into public.${table}`);
+    }
+    expect(ENSURE).toContain("on conflict");
+  });
+
+  it("acts only on the caller's own account", () => {
+    expect(ENSURE).toContain("v_user_id uuid := auth.uid()");
+    expect(ENSURE).toContain("AUTH_REQUIRED");
+    expect(ENSURE).toContain("revoke all on function public.ensure_profile() from public");
+  });
+});

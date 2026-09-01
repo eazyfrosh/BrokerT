@@ -31,7 +31,7 @@ export async function allocateInvestmentAction(input: unknown): Promise<ActionRe
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to allocate to a strategy.");
+  if (!session?.profile) return fail("Please sign in to allocate to a strategy.");
   if (session.profile.account_status !== "active") {
     return fail("Your account is not active, so allocations cannot be made.");
   }

@@ -30,7 +30,7 @@ export async function submitCarOrderAction(input: unknown): Promise<ActionResult
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to submit an order request.");
+  if (!session?.profile) return fail("Please sign in to submit an order request.");
   if (session.profile.account_status !== "active") {
     return fail("Your account is not active, so order requests cannot be submitted.");
   }
@@ -142,7 +142,7 @@ export async function cancelCarOrderAction(id: string): Promise<ActionResult> {
   if (!parsed.success) return fail("That order could not be found.");
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   // RLS restricts this update to the caller's own row and to statuses that are
   // still withdrawable; a trigger blocks every field except the status.

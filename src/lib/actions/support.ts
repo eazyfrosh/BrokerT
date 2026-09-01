@@ -19,7 +19,7 @@ export async function createSupportTicketAction(
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to contact support.");
+  if (!session?.profile) return fail("Please sign in to contact support.");
 
   const reference = generateReference("TKT");
 
@@ -59,7 +59,7 @@ export async function replyToTicketAction(_prev: unknown, formData: FormData): P
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   // RLS only accepts a non-staff message on a ticket the caller owns.
   const { error } = await session.supabase.from("support_messages").insert({
@@ -90,7 +90,7 @@ export async function contactAction(_prev: unknown, formData: FormData): Promise
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) {
+  if (!session?.profile) {
     return fail(
       "Please sign in to open a support ticket, or email support directly — we cannot record messages from signed-out visitors.",
     );

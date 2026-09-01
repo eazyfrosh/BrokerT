@@ -31,7 +31,7 @@ export default async function ContactPage() {
             <CardTitle>Send a message</CardTitle>
           </CardHeader>
           <CardContent>
-            {session ? (
+            {session?.profile ? (
               <ContactForm
                 defaultName={displayName(session.profile)}
                 defaultEmail={session.profile.email}
@@ -73,7 +73,7 @@ export default async function ContactPage() {
                   {APP.supportEmail}
                 </a>
               </p>
-              {session && (
+              {session?.profile && (
                 <p className="flex items-center gap-2">
                   <LifeBuoy className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                   <Link href="/support" className="font-medium text-primary hover:underline">

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
   if (raw.length < 2) return NextResponse.json({ results: [] });
 
   const session = await getSessionContext();
-  if (!session) return NextResponse.json({ results: [] }, { status: 401 });
+  if (!session?.profile) return NextResponse.json({ results: [] }, { status: 401 });
 
   const term = escapeLike(raw).slice(0, 60);
   if (!term) return NextResponse.json({ results: [] });

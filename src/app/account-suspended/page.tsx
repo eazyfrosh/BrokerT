@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default async function AccountSuspendedPage() {
   const session = await getSessionContext();
-  const reason = session?.profile.suspension_reason;
+  const reason = session?.profile?.suspension_reason ?? null;
 
   return (
     <main id="main" className="flex min-h-dvh items-center justify-center px-5 py-12">

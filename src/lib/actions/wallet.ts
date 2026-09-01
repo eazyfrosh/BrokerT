@@ -36,7 +36,7 @@ export async function demoCashMovementAction(input: unknown): Promise<ActionResu
   }
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
   if (session.profile.account_status !== "active") {
     return fail("Your account is not active, so balances cannot be changed.");
   }

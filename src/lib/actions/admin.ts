@@ -18,9 +18,9 @@ import { ok, fail, fromZodError, fromDatabaseError, type ActionResult } from "./
 /** Every admin action re-checks the caller's role server-side. */
 async function requireAdminSession() {
   const session = await getSessionContext();
-  if (!session) return null;
+  if (!session?.profile) return null;
   if (!isAdminRole(session.profile.role)) return null;
-  return session;
+  return { ...session, profile: session.profile };
 }
 
 export async function adminUpdateUserStatusAction(input: unknown): Promise<ActionResult> {
@@ -28,7 +28,7 @@ export async function adminUpdateUserStatusAction(input: unknown): Promise<Actio
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   // The RPC audits the change and notifies the customer in the same transaction.
   const { error } = await session.supabase.rpc("admin_update_user_status", {
@@ -49,7 +49,7 @@ export async function adminUpdateUserRoleAction(input: unknown): Promise<ActionR
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
   // Minting administrators is restricted to super admins by the RPC as well.
   if (session.profile.role !== "super_admin") {
     return fail("Only a super administrator can change roles.");
@@ -72,7 +72,7 @@ export async function adminUpdateKycAction(input: unknown): Promise<ActionResult
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const { error } = await session.supabase
     .from("profiles")
@@ -110,7 +110,7 @@ export async function adminUpdateOrderStatusAction(input: unknown): Promise<Acti
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const { error } = await session.supabase.rpc("admin_update_order_status", {
     p_order_id: parsed.data.orderId,
@@ -129,7 +129,7 @@ export async function adminUpdateCarOrderAction(input: unknown): Promise<ActionR
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const { error } = await session.supabase.rpc("admin_update_car_order", {
     p_car_order_id: parsed.data.carOrderId,
@@ -149,7 +149,7 @@ export async function adminBroadcastNotificationAction(input: unknown): Promise<
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   if (parsed.data.target === "selected" && !parsed.data.userIds?.length) {
     return fail("Select at least one recipient.");
@@ -175,7 +175,7 @@ export async function adminSaveInvestmentAction(input: unknown): Promise<ActionR
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const payload = {
     slug: parsed.data.slug,
@@ -253,7 +253,7 @@ export async function adminSetInvestmentStatusAction(
   if (!parsed.success) return fail("That strategy could not be found.");
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const { data, error } = await session.supabase
     .from("investments")
@@ -285,7 +285,7 @@ export async function adminReplyToTicketAction(_prev: unknown, formData: FormDat
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const { error } = await session.supabase.from("support_messages").insert({
     ticket_id: parsed.data.ticketId,
@@ -314,7 +314,7 @@ export async function adminSetTicketStatusAction(
   if (!parsed.success) return fail("That ticket could not be found.");
 
   const session = await requireAdminSession();
-  if (!session) return fail("You do not have permission to do that.");
+  if (!session?.profile) return fail("You do not have permission to do that.");
 
   const { error } = await session.supabase
     .from("support_tickets")

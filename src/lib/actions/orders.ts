@@ -36,7 +36,7 @@ export async function placeOrderAction(input: unknown): Promise<ActionResult<Pla
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to place an order.");
+  if (!session?.profile) return fail("Please sign in to place an order.");
   if (session.profile.account_status !== "active") {
     return fail("Your account is not active, so orders cannot be placed.");
   }
@@ -107,7 +107,7 @@ export async function cancelOrderAction(orderId: string): Promise<ActionResult> 
   if (!parsed.success) return fail("That order could not be found.");
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   const { error } = await session.supabase.rpc("cancel_order", { p_order_id: parsed.data.orderId });
   if (error) return fromDatabaseError(error, "We could not cancel that order.");

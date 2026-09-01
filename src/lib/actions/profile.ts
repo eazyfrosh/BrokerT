@@ -16,7 +16,7 @@ export async function updateProfileAction(_prev: unknown, formData: FormData): P
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   // Role, status and verification are deliberately absent: a database trigger
   // rejects any attempt to change them from a non-admin session.
@@ -49,7 +49,7 @@ export async function updateSettingsAction(_prev: unknown, formData: FormData): 
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   const payload = {
     user_id: session.user.id,

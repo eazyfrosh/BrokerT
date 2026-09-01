@@ -91,10 +91,10 @@ export default async function VehicleDetailPage({ params }: { params: Promise<{ 
       <VehicleConfigurator
         vehicle={vehicle}
         groups={groups}
-        signedIn={Boolean(session)}
-        accountActive={session?.profile.account_status === "active"}
+        signedIn={Boolean(session?.profile)}
+        accountActive={session?.profile?.account_status === "active"}
         defaultDelivery={
-          session
+          session?.profile
             ? {
                 fullName: displayName(session.profile),
                 email: session.profile.email,

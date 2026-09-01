@@ -10,13 +10,13 @@ import { getSessionContext } from "@/lib/auth";
 export default async function SharedLayout({ children }: { children: React.ReactNode }) {
   const session = await getSessionContext();
 
-  if (session && session.profile.account_status === "active") {
+  if (session?.profile && session.profile.account_status === "active") {
     return <AppShell profile={session.profile}>{children}</AppShell>;
   }
 
   return (
     <>
-      <MarketingHeader signedIn={Boolean(session)} />
+      <MarketingHeader signedIn={Boolean(session?.profile)} />
       <main id="main" className="flex-1">
         {children}
       </main>

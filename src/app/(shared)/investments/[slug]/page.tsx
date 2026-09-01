@@ -190,8 +190,8 @@ export default async function InvestmentDetailPage({
               <AllocatePanel
                 investment={investment}
                 availableCash={Number(wallet?.available_balance ?? 0)}
-                signedIn={Boolean(session)}
-                accountActive={session?.profile.account_status === "active"}
+                signedIn={Boolean(session?.profile)}
+                accountActive={session?.profile?.account_status === "active"}
               />
             </CardContent>
           </Card>

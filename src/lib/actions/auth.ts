@@ -191,7 +191,7 @@ export async function changePasswordAction(_prev: unknown, formData: FormData): 
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in again to change your password.");
+  if (!session?.profile) return fail("Please sign in again to change your password.");
 
   // Re-authenticate before accepting a new password, so a hijacked session
   // alone is not enough to lock the owner out.
@@ -227,7 +227,7 @@ export async function changePasswordAction(_prev: unknown, formData: FormData): 
 /** Signs out every other session for this user. */
 export async function signOutOtherSessionsAction(): Promise<ActionResult> {
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in again.");
+  if (!session?.profile) return fail("Please sign in again.");
 
   const { error } = await session.supabase.auth.signOut({ scope: "others" });
   if (error) return fail("We could not sign out your other sessions.");

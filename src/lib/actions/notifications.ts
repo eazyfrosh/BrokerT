@@ -10,7 +10,7 @@ export async function markNotificationReadAction(id: string): Promise<ActionResu
   if (!parsed.success) return fail("That notification could not be found.");
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   // RLS restricts this to the caller's own rows, and a trigger blocks any
   // change other than read_at.
@@ -28,7 +28,7 @@ export async function markNotificationReadAction(id: string): Promise<ActionResu
 
 export async function markAllNotificationsReadAction(): Promise<ActionResult<number>> {
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   const { data, error } = await session.supabase.rpc("mark_all_notifications_read");
   if (error) return fail("We could not update your notifications.");
@@ -42,7 +42,7 @@ export async function deleteNotificationAction(id: string): Promise<ActionResult
   if (!parsed.success) return fail("That notification could not be found.");
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   const { error } = await session.supabase.from("notifications").delete().eq("id", parsed.data);
   if (error) return fail("We could not remove that notification.");

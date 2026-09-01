@@ -10,7 +10,7 @@ export async function addToWatchlistAction(input: unknown): Promise<ActionResult
   if (!parsed.success) return fromZodError(parsed.error);
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   // Provisioned by handle_new_user(), but an account created before that
   // trigger existed may not have one.
@@ -53,7 +53,7 @@ export async function removeFromWatchlistAction(itemId: string): Promise<ActionR
   if (!parsed.success) return fail("That item could not be found.");
 
   const session = await getSessionContext();
-  if (!session) return fail("Please sign in to continue.");
+  if (!session?.profile) return fail("Please sign in to continue.");
 
   const { error } = await session.supabase.from("watchlist_items").delete().eq("id", parsed.data);
   if (error) return fail("We could not remove that instrument.");
