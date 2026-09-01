@@ -67,7 +67,11 @@ describe("email link origin", () => {
   });
 
   it("assumes http only for a local host, https otherwise", () => {
-    expect(ORIGIN).toMatch(/localhost.*127\.0\.0\.1.*"http".*"https"/s);
+    // Written without the dotAll flag, which needs an ES2018 target.
+    expect(ORIGIN).toContain('host.startsWith("localhost")');
+    expect(ORIGIN).toContain('host.startsWith("127.0.0.1")');
+    expect(ORIGIN).toContain('? "http"');
+    expect(ORIGIN).toContain(': "https"');
   });
 
   it("no longer builds auth redirects from a build-time constant", () => {
